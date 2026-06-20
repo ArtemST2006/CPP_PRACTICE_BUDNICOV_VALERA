@@ -1,78 +1,65 @@
-#include <memory>
-#include <stdexcept>
-
 #include "Cat.h"
 #include "Dog.h"
 #include "Pet.h"
 #include "Ui.h"
 
 void renderPet(Pet* pet) {
-    ui::renderGame(*pet);
+    renderGame(*pet);
 }
 
-std::unique_ptr<Pet> choosePet() {
-    int choice = ui::showWelcome();
-    std::string name = ui::askName();
+Pet* choosePet() {
+    int choice = showWelcome();
+    std::string name = askName();
     if (choice == 1) {
-        return std::make_unique<Cat>(name);
+        return new Cat(name);
     }
-    return std::make_unique<Dog>(name);
+    return new Dog(name);
 }
 
 void handleAction(Pet* pet, int choice) {
-    switch (choice) {
-        case 1:
-            pet->feed();
-            ui::animateAction(*pet, ui::ActionAnim::Feed);
-            ui::showMessage("Питомец поел.");
-            break;
-        case 2:
-            pet->drink();
-            ui::animateAction(*pet, ui::ActionAnim::Drink);
-            ui::showMessage("Питомец попил.");
-            break;
-        case 3:
-            pet->play();
-            ui::animateAction(*pet, ui::ActionAnim::Play);
-            ui::showMessage("Поиграли вместе!");
-            break;
-        case 4:
-            pet->sleep();
-            ui::animateAction(*pet, ui::ActionAnim::Sleep);
-            ui::showMessage("Питомец поспал.");
-            break;
-        case 5:
-            pet->specialAction();
-            ui::animateAction(*pet, ui::ActionAnim::Special);
-            ui::showMessage(pet->specialActionName() + " — выполнено!");
-            break;
-        default:
-            break;
+    if (choice == 1) {
+        pet->feed();
+        animateAction(*pet, AnimFeed);
+        showMessage("Питомец поел.");
+    } else if (choice == 2) {
+        pet->drink();
+        animateAction(*pet, AnimDrink);
+        showMessage("Питомец попил.");
+    } else if (choice == 3) {
+        pet->play();
+        animateAction(*pet, AnimPlay);
+        showMessage("Поиграли вместе!");
+    } else if (choice == 4) {
+        pet->sleep();
+        animateAction(*pet, AnimSleep);
+        showMessage("Питомец поспал.");
+    } else if (choice == 5) {
+        pet->specialAction();
+        animateAction(*pet, AnimSpecial);
+        showMessage(pet->specialActionName() + " — выполнено!");
     }
 }
 
 int main() {
-    ui::init();
-    try {
-        auto pet = choosePet();
+    uiInit();
 
-        while (pet->isAlive()) {
-            renderPet(pet.get());
-            int choice = ui::askMenuChoice(*pet);
-            if (choice == 6) break;
-            if (choice >= 1 && choice <= 5) {
-                handleAction(pet.get(), choice);
-            }
-            pet->tick();
-        }
+    Pet* pet = choosePet();
 
-        if (!pet->isAlive()) {
-            ui::showDeathScreen(*pet);
+    while (pet->isAlive()) {
+        renderPet(pet);
+        int choice = askMenuChoice(*pet);
+        if (choice == 6) break;
+        if (choice >= 1 && choice <= 5) {
+            handleAction(pet, choice);
         }
-    } catch (...) {
-        ui::shutdown();
-        throw;
+        pet->tick();
     }
-    ui::shutdown();
+
+    if (!pet->isAlive()) {
+        showDeathScreen(*pet);
+    }
+
+    delete pet;
+    uiShutdown();
     return 0;
 }

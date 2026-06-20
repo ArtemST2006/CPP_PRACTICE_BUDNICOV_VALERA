@@ -4,7 +4,7 @@
 
 class Dog : public Pet {
 public:
-    Dog(const std::string& name);
+    Dog(std::string n);
 
     std::string voice() const override;
     std::string species() const override;

@@ -6,61 +6,56 @@
 #include <sstream>
 #include <vector>
 
-namespace ui {
+using namespace std;
 
-namespace {
+static const int kPairDefault = 1;
+static const int kPairGood    = 2;
+static const int kPairMid     = 3;
+static const int kPairBad     = 4;
+static const int kPairTitle   = 5;
 
-constexpr int kPairDefault = 1;
-constexpr int kPairGood    = 2;
-constexpr int kPairMid     = 3;
-constexpr int kPairBad     = 4;
-constexpr int kPairTitle   = 5;
-
-int barColorPair(int value, int max) {
-    int pct = (value * 100) / max;
+static int barColorPair(int value) {
+    int pct = value;
     if (pct >= 60) return kPairGood;
     if (pct >= 30) return kPairMid;
     return kPairBad;
 }
 
-std::vector<std::string> splitLines(const std::string& s) {
-    std::vector<std::string> out;
-    std::stringstream ss(s);
-    std::string line;
-    while (std::getline(ss, line)) {
+static vector<string> splitLines(const string& s) {
+    vector<string> out;
+    stringstream ss(s);
+    string line;
+    while (getline(ss, line)) {
         out.push_back(line);
     }
     return out;
 }
 
-void drawBar(WINDOW* win, int y, int x,
-             const std::string& label, int value, int max = 100) {
-    constexpr int width = 20;
-    int filled = (value * width) / max;
+static void drawBar(int y, int x, const string& label, int value) {
+    int width = 20;
+    int filled = (value * width) / 100;
     if (filled < 0) filled = 0;
     if (filled > width) filled = width;
 
-    mvwprintw(win, y, x, "%-9s", label.c_str());
-    waddch(win, '[');
-    int pair = barColorPair(value, max);
-    wattron(win, COLOR_PAIR(pair));
-    for (int i = 0; i < filled; ++i) waddch(win, '#');
-    wattroff(win, COLOR_PAIR(pair));
-    for (int i = filled; i < width; ++i) waddch(win, '.');
-    waddch(win, ']');
-    wprintw(win, " %3d/%d", value, max);
+    mvprintw(y, x, "%-9s", label.c_str());
+    addch('[');
+    int pair = barColorPair(value);
+    attron(COLOR_PAIR(pair));
+    for (int i = 0; i < filled; i++) addch('#');
+    attroff(COLOR_PAIR(pair));
+    for (int i = filled; i < width; i++) addch('.');
+    addch(']');
+    printw(" %3d/100", value);
 }
 
-void waitAnyKey(WINDOW* win, int y, int x) {
-    mvwprintw(win, y, x, "[любая клавиша]");
-    wrefresh(win);
-    wgetch(win);
+static void waitAnyKey(int y, int x) {
+    mvprintw(y, x, "[любая клавиша]");
+    refresh();
+    getch();
 }
 
-}
-
-void init() {
-    std::setlocale(LC_ALL, "");
+void uiInit() {
+    setlocale(LC_ALL, "");
     initscr();
     cbreak();
     noecho();
@@ -70,15 +65,15 @@ void init() {
     if (has_colors()) {
         start_color();
         use_default_colors();
-        init_pair(kPairDefault, COLOR_WHITE, -1);
-        init_pair(kPairGood,    COLOR_GREEN, -1);
+        init_pair(kPairDefault, COLOR_WHITE,  -1);
+        init_pair(kPairGood,    COLOR_GREEN,  -1);
         init_pair(kPairMid,     COLOR_YELLOW, -1);
-        init_pair(kPairBad,     COLOR_RED, -1);
-        init_pair(kPairTitle,   COLOR_CYAN, -1);
+        init_pair(kPairBad,     COLOR_RED,    -1);
+        init_pair(kPairTitle,   COLOR_CYAN,   -1);
     }
 }
 
-void shutdown() {
+void uiShutdown() {
     curs_set(1);
     endwin();
 }
@@ -98,9 +93,9 @@ int showWelcome() {
     mvprintw(9,  4, "              > ^ <");
 
     mvprintw(11, 4, "2) Собака      __");
-    mvprintw(12, 4, "            o-''))____");
-    mvprintw(13, 4, "             \\_/    /");
-    mvprintw(14, 4, "              ) ( )/");
+    mvprintw(12, 4, "             /  \\__");
+    mvprintw(13, 4, "            ( ^.^ )_/");
+    mvprintw(14, 4, "             U   U");
 
     mvprintw(16, 2, "Нажми 1 или 2: ");
     refresh();
@@ -112,16 +107,20 @@ int showWelcome() {
     }
 }
 
-std::string askName() {
+string askName() {
     clear();
     mvprintw(2, 2, "Как назовём питомца? ");
     echo();
     curs_set(1);
-    char buf[64] = {0};
-    getnstr(buf, sizeof(buf) - 1);
+
+    char buf[64];
+    for (int i = 0; i < 64; i++) buf[i] = 0;
+    getnstr(buf, 63);
+
     noecho();
     curs_set(0);
-    std::string name(buf);
+
+    string name(buf);
     if (name.empty()) name = "Безымянный";
     return name;
 }
@@ -136,39 +135,40 @@ void renderGame(const Pet& pet) {
 
     box(stdscr, 0, 0);
 
-    auto art = splitLines(pet.getAsciiArt());
+    vector<string> art = splitLines(pet.getAsciiArt());
     int y = 2;
-    for (const auto& line : art) {
-        mvprintw(y++, 4, "%s", line.c_str());
+    for (int i = 0; i < (int)art.size(); i++) {
+        mvprintw(y, 4, "%s", art[i].c_str());
+        y++;
     }
     mvprintw(y + 1, 4, "\"%s\"", pet.voice().c_str());
 
     int barY = 2;
     int barX = 30;
-    drawBar(stdscr, barY++, barX, "HP",      pet.getHp());
-    drawBar(stdscr, barY++, barX, "Голод",   100 - pet.getHunger());
-    drawBar(stdscr, barY++, barX, "Жажда",   100 - pet.getThirst());
-    drawBar(stdscr, barY++, barX, "Настр.",  pet.getMood());
-    drawBar(stdscr, barY++, barX, "Энергия", pet.getEnergy());
+    drawBar(barY, barX, "HP",      pet.getHp());            barY++;
+    drawBar(barY, barX, "Голод",   100 - pet.getHunger());  barY++;
+    drawBar(barY, barX, "Жажда",   100 - pet.getThirst());  barY++;
+    drawBar(barY, barX, "Настр.",  pet.getMood());          barY++;
+    drawBar(barY, barX, "Энергия", pet.getEnergy());        barY++;
 }
 
 int askMenuChoice(const Pet& pet) {
-    constexpr int kIdleTickMs = 4000;
+    int idleMs = 4000;
 
     int y = 12;
     attron(A_BOLD);
-    mvprintw(y++, 4, "Что делаем?");
+    mvprintw(y, 4, "Что делаем?"); y++;
     attroff(A_BOLD);
-    mvprintw(y++, 4, "  1) Покормить");
-    mvprintw(y++, 4, "  2) Напоить");
-    mvprintw(y++, 4, "  3) Поиграть");
-    mvprintw(y++, 4, "  4) Уложить спать");
-    mvprintw(y++, 4, "  5) %s", pet.specialActionName().c_str());
-    mvprintw(y++, 4, "  6) Выйти");
+    mvprintw(y, 4, "  1) Покормить");       y++;
+    mvprintw(y, 4, "  2) Напоить");         y++;
+    mvprintw(y, 4, "  3) Поиграть");        y++;
+    mvprintw(y, 4, "  4) Уложить спать");   y++;
+    mvprintw(y, 4, "  5) %s", pet.specialActionName().c_str()); y++;
+    mvprintw(y, 4, "  6) Выйти");           y++;
     mvprintw(y + 1, 4, "Жми цифру (или подожди — время идёт): ");
     refresh();
 
-    timeout(kIdleTickMs);
+    timeout(idleMs);
     int ch = getch();
     timeout(-1);
 
@@ -177,10 +177,10 @@ int askMenuChoice(const Pet& pet) {
     return 0;
 }
 
-void showMessage(const std::string& msg) {
+void showMessage(const string& msg) {
     int y, x;
-    (void)x;
     getmaxyx(stdscr, y, x);
+    (void)x;
     attron(COLOR_PAIR(kPairTitle));
     mvprintw(y - 2, 4, "%-60s", msg.c_str());
     attroff(COLOR_PAIR(kPairTitle));
@@ -189,59 +189,44 @@ void showMessage(const std::string& msg) {
 }
 
 void animateAction(const Pet& pet, ActionAnim kind) {
-    std::vector<std::vector<std::string>> frames;
-    switch (kind) {
-        case ActionAnim::Feed:
-            frames = {
-                {"   .       ", "           ", "           "},
-                {"  ___      ", "  \\_/      ", "   У       "},
-                {"  ___      ", " (~~~)     ", "  \\_/      "},
-                {"  ___      ", " (   )     ", "  \\_/  ням ",},
-            };
-            break;
-        case ActionAnim::Drink:
-            frames = {
-                {"   .       ", "           ", "           "},
-                {"   .       ", "   o       ", "           "},
-                {"   .       ", "   o       ", "   o       "},
-                {"  ~~~      ", " ( H2O )   ", "  \\___/    "},
-            };
-            break;
-        case ActionAnim::Play:
-            frames = {
-                {"   o       ", "           ", "           "},
-                {"           ", "    o      ", "           "},
-                {"           ", "           ", "      o    "},
-                {"           ", "    o      ", "           "},
-                {"   o       ", "           ", "           "},
-            };
-            break;
-        case ActionAnim::Sleep:
-            frames = {
-                {"           ", "  z        ", "           "},
-                {"           ", "  Z z      ", "           "},
-                {"   Z       ", "  z Z      ", "           "},
-                {"  Z z      ", "   Z       ", "  z        "},
-            };
-            break;
-        case ActionAnim::Special:
-            frames = {
-                {" ~~~       ", "           ", "           "},
-                {" ~~~~~     ", "  ...      ", "           "},
-                {" ~~~~~~~   ", "  .....    ", "    ...    "},
-                {" ~~~~~~~~~ ", " ........  ", "   ......  "},
-            };
-            break;
+    vector< vector<string> > frames;
+
+    if (kind == AnimFeed) {
+        frames.push_back({"   .       ", "           ", "           "});
+        frames.push_back({"  ___      ", "  \\_/      ", "   У       "});
+        frames.push_back({"  ___      ", " (~~~)     ", "  \\_/      "});
+        frames.push_back({"  ___      ", " (   )     ", "  \\_/  ням "});
+    } else if (kind == AnimDrink) {
+        frames.push_back({"   .       ", "           ", "           "});
+        frames.push_back({"   .       ", "   o       ", "           "});
+        frames.push_back({"   .       ", "   o       ", "   o       "});
+        frames.push_back({"  ~~~      ", " ( H2O )   ", "  \\___/    "});
+    } else if (kind == AnimPlay) {
+        frames.push_back({"   o       ", "           ", "           "});
+        frames.push_back({"           ", "    o      ", "           "});
+        frames.push_back({"           ", "           ", "      o    "});
+        frames.push_back({"           ", "    o      ", "           "});
+        frames.push_back({"   o       ", "           ", "           "});
+    } else if (kind == AnimSleep) {
+        frames.push_back({"           ", "  z        ", "           "});
+        frames.push_back({"           ", "  Z z      ", "           "});
+        frames.push_back({"   Z       ", "  z Z      ", "           "});
+        frames.push_back({"  Z z      ", "   Z       ", "  z        "});
+    } else {
+        frames.push_back({" ~~~       ", "           ", "           "});
+        frames.push_back({" ~~~~~     ", "  ...      ", "           "});
+        frames.push_back({" ~~~~~~~   ", "  .....    ", "    ...    "});
+        frames.push_back({" ~~~~~~~~~ ", " ........  ", "   ......  "});
     }
 
-    constexpr int animY = 3;
-    constexpr int animX = 18;
-    constexpr int frameMs = 160;
+    int animY = 3;
+    int animX = 18;
+    int frameMs = 160;
 
-    for (const auto& frame : frames) {
+    for (int f = 0; f < (int)frames.size(); f++) {
         renderGame(pet);
-        for (size_t row = 0; row < frame.size(); ++row) {
-            mvprintw(animY + static_cast<int>(row), animX, "%s", frame[row].c_str());
+        for (int row = 0; row < (int)frames[f].size(); row++) {
+            mvprintw(animY + row, animX, "%s", frames[f][row].c_str());
         }
         refresh();
         napms(frameMs);
@@ -262,7 +247,5 @@ void showDeathScreen(const Pet& pet) {
     mvprintw(10, 4, "Твой %s по имени %s прожил %d ходов.",
              pet.species().c_str(), pet.getName().c_str(), pet.getAge());
 
-    waitAnyKey(stdscr, 12, 4);
-}
-
+    waitAnyKey(12, 4);
 }

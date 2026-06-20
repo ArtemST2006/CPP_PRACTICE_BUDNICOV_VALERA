@@ -2,7 +2,7 @@
 
 #include <string>
 
-enum class MoodState {
+enum MoodState {
     Happy,
     Neutral,
     Sad,
@@ -12,8 +12,8 @@ enum class MoodState {
 
 class Pet {
 public:
-    Pet(const std::string& name);
-    virtual ~Pet() = default;
+    Pet(std::string n);
+    virtual ~Pet() {}
 
     void feed();
     void drink();
@@ -24,13 +24,13 @@ public:
     bool isAlive() const;
     MoodState getMoodState() const;
 
-    const std::string& getName() const { return name_; }
-    int getHp() const { return hp_; }
-    int getHunger() const { return hunger_; }
-    int getThirst() const { return thirst_; }
-    int getMood() const { return mood_; }
-    int getEnergy() const { return energy_; }
-    int getAge() const { return age_; }
+    std::string getName() const { return name; }
+    int getHp() const { return hp; }
+    int getHunger() const { return hunger; }
+    int getThirst() const { return thirst; }
+    int getMood() const { return mood; }
+    int getEnergy() const { return energy; }
+    int getAge() const { return age; }
 
     virtual std::string voice() const = 0;
     virtual std::string species() const = 0;
@@ -41,11 +41,11 @@ public:
 protected:
     static int clamp(int v, int lo = 0, int hi = 100);
 
-    std::string name_;
-    int hp_ = 100;
-    int hunger_ = 30;
-    int thirst_ = 30;
-    int mood_ = 70;
-    int energy_ = 80;
-    int age_ = 0;
+    std::string name;
+    int hp;
+    int hunger;
+    int thirst;
+    int mood;
+    int energy;
+    int age;
 };

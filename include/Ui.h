@@ -3,10 +3,16 @@
 #include <string>
 #include "Pet.h"
 
-namespace ui {
+enum ActionAnim {
+    AnimFeed,
+    AnimDrink,
+    AnimPlay,
+    AnimSleep,
+    AnimSpecial
+};
 
-void init();
-void shutdown();
+void uiInit();
+void uiShutdown();
 
 int showWelcome();
 std::string askName();
@@ -15,16 +21,5 @@ void renderGame(const Pet& pet);
 int askMenuChoice(const Pet& pet);
 
 void showMessage(const std::string& msg);
-void showDeathScreen(const Pet& pet);
-
-enum class ActionAnim {
-    Feed,
-    Drink,
-    Play,
-    Sleep,
-    Special,
-};
-
 void animateAction(const Pet& pet, ActionAnim kind);
-
-}
+void showDeathScreen(const Pet& pet);

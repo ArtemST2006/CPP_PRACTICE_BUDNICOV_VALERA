@@ -1,6 +1,6 @@
 #include "Cat.h"
 
-Cat::Cat(const std::string& name) : Pet(name) {}
+Cat::Cat(std::string n) : Pet(n) {}
 
 std::string Cat::voice() const {
     return "Мяу!";
@@ -15,37 +15,38 @@ std::string Cat::specialActionName() const {
 }
 
 void Cat::specialAction() {
-    mood_ = clamp(mood_ + 30);
-    energy_ = clamp(energy_ - 5);
+    mood = clamp(mood + 30);
+    energy = clamp(energy - 5);
 }
 
 std::string Cat::getAsciiArt() const {
-    switch (getMoodState()) {
-        case MoodState::Happy:
-            return
-                "   /\\_/\\   \n"
-                "  ( ^.^ )  \n"
-                "   > ^ <   \n";
-        case MoodState::Neutral:
-            return
-                "   /\\_/\\   \n"
-                "  ( -.- )  \n"
-                "   > o <   \n";
-        case MoodState::Sad:
-            return
-                "   /\\_/\\   \n"
-                "  ( T.T )  \n"
-                "   > _ <   \n";
-        case MoodState::Sick:
-            return
-                "   /\\_/\\   \n"
-                "  ( @.@ )~ \n"
-                "   > ~ <   \n";
-        case MoodState::Dead:
-        default:
-            return
-                "   /\\_/\\   \n"
-                "  ( x.x )  \n"
-                "   > - <   \n";
+    MoodState state = getMoodState();
+    if (state == Happy) {
+        return
+            "   /\\_/\\   \n"
+            "  ( ^.^ )  \n"
+            "   > ^ <   \n";
     }
+    if (state == Neutral) {
+        return
+            "   /\\_/\\   \n"
+            "  ( -.- )  \n"
+            "   > o <   \n";
+    }
+    if (state == Sad) {
+        return
+            "   /\\_/\\   \n"
+            "  ( T.T )  \n"
+            "   > _ <   \n";
+    }
+    if (state == Sick) {
+        return
+            "   /\\_/\\   \n"
+            "  ( @.@ )~ \n"
+            "   > ~ <   \n";
+    }
+    return
+        "   /\\_/\\   \n"
+        "  ( x.x )  \n"
+        "   > - <   \n";
 }
