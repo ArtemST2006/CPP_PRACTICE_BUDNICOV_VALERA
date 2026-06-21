@@ -2,3 +2,6 @@ a
 *.swp
 *.docx
 
+*.o
+*.out
+
