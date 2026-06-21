@@ -111,14 +111,22 @@ static std::vector<Service*> pickServices(const std::string& contentType, const 
     std::getline(std::cin, line);
     std::vector<int> picks;
     std::string num;
+    auto tryParse = [&picks](const std::string& s) {
+        if (s.empty()) return;
+        try {
+            picks.push_back(std::stoi(s));
+        } catch (const std::exception&) {
+            std::cout << "Пропущен некорректный номер: " << s << std::endl;
+        }
+    };
     for (char ch : line) {
         if (ch == ' ' || ch == '\t' || ch == ',') {
-            if (!num.empty()) { picks.push_back(std::stoi(num)); num.clear(); }
+            tryParse(num); num.clear();
         } else if (ch >= '0' && ch <= '9') {
             num.push_back(ch);
         }
     }
-    if (!num.empty()) picks.push_back(std::stoi(num));
+    tryParse(num);
 
     std::vector<Service*> result;
     for (int p : picks) {
